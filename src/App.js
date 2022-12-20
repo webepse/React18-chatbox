@@ -13,20 +13,30 @@ const App = () => {
   const addMessage = (message) => {
     const newMessages = {...messages}
     newMessages[`message-${Date.now()}`] = message
-    setMessages({message:newMessages}) 
+    setMessages(newMessages) 
   }
+
+  const myMessages = Object.keys(messages).map(iteration => (
+    <Message 
+      key={iteration}
+      // messages.message-12165159.pseudo
+      // messages.iteration.pseudo
+      // message[iteration].pseudo
+      pseudo={messages[iteration].pseudo}
+      message={messages[iteration].message}
+    />
+  ))
 
 
   return ( 
       <div className="box">
         <div>
           <div className="messages">
-            <Message />
-            <Message />
-            <Message />
+            {myMessages}
           </div>
         </div>
-        <Formulaire 
+        <Formulaire
+          length={140} 
           pseudo={pseudo}
           addMessage={addMessage}
         />
