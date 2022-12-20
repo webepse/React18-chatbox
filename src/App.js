@@ -1,30 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Message from './components/Message';
 import Formulaire from './components/Formulaire';
-
 import './App.css';
+
+// firebase 
+import database from './base'
+import { getDatabase, ref, set, remove, onValue } from 'firebase/database';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import './animation.css'
 
 const App = () => {
   let {login} = useParams()
   const [pseudo, setPseudo] = useState(login)
   const [messages, setMessages] = useState({})
+  const messageRef = useRef()
+
+  useEffect(()=>{
+    const dbMessagesRef = ref(database, 'messages')
+    // ecouteur d'event de changement de des données
+    onValue(dbMessagesRef,(snapshot) => {
+      const data = snapshot.val();
+      if(data)
+      {
+        setMessages(data)
+      }
+    })
+  },[])
 
   const addMessage = (message) => {
     const newMessages = {...messages}
     newMessages[`message-${Date.now()}`] = message
-    setMessages(newMessages) 
+    Object.keys(newMessages).slice(0,-10).forEach(key => {
+      newMessages[key] = null
+    })
+    set(ref(database,'/'),{
+      messages: newMessages
+    })
   }
 
+  //fonction qui vérifie si c'est l'utilsateur connecté
+  const isUser = myPseudo => myPseudo === pseudo
+
   const myMessages = Object.keys(messages).map(iteration => (
-    <Message 
+    <CSSTransition
+      timeout={200}
+      classNames='fade'
       key={iteration}
-      // messages.message-12165159.pseudo
-      // messages.iteration.pseudo
-      // message[iteration].pseudo
-      pseudo={messages[iteration].pseudo}
-      message={messages[iteration].message}
-    />
+    >
+      <Message 
+        isUser={isUser}
+        pseudo={messages[iteration].pseudo}
+        message={messages[iteration].message}
+      />
+    </CSSTransition>
   ))
 
 
@@ -32,7 +61,9 @@ const App = () => {
       <div className="box">
         <div>
           <div className="messages">
-            {myMessages}
+            <TransitionGroup className="message">
+              {myMessages}
+            </TransitionGroup>
           </div>
         </div>
         <Formulaire
@@ -45,3 +76,4 @@ const App = () => {
 }
  
 export default App;
+
